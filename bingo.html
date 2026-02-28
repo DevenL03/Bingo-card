@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Redemption RS 2026 Bingo</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    .zoom-wrapper {
+      transform-origin: center center;
+      transition: transform 0.2s ease;
+    }
+
+    .board-container {
+      position: relative;
+      width: 95vw;
+      max-width: 1200px;
+      aspect-ratio: 16 / 9;
+    }
+
+    .board-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 16px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.8);
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .grid {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(7, 1fr);
+    }
+
+    .tile {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .x-container {
+      position: absolute;
+      width: var(--x-size, 60%);
+      height: var(--x-size, 60%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      cursor: grab;
+    }
+
+    /* Neon green X */
+    .x-line {
+      position: absolute;
+      width: 100%;
+      height: 6px;
+      background: #39FF14;
+      box-shadow: 0 0 8px #39FF14, 0 0 16px #39FF14;
+      top: 50%;
+      left: 50%;
+      transform-origin: center;
+    }
+
+    .x1 { transform: translate(-50%, -50%) rotate(45deg); }
+    .x2 { transform: translate(-50%, -50%) rotate(-45deg); }
+
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      background: rgba(0,0,0,0.85);
+      padding: 12px 20px;
+      border-radius: 12px;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    input[type="range"] {
+      width: 120px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="zoom-wrapper" id="zoomWrapper">
+    <div class="board-container">
+      <img src="af475a37-7fb9-4d8f-b219-4f9608c4f109.png" alt="Bingo Board" />
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="zoomOut()">-</button>
+    <button onclick="zoomIn()">+</button>
+    X Size
+    <input type="range" min="30" max="100" value="60" oninput="changeXSize(this.value)">
+  </div>
+
+  <script>
+    const rows = 7;
+    const cols = 7;
+    const grid = document.getElementById('grid');
+    const zoomWrapper = document.getElementById('zoomWrapper');
+
+    let zoomLevel = 1;
+
+    function zoomIn() {
+      zoomLevel += 0.1;
+      zoomWrapper.style.transform = `scale(${zoomLevel})`;
+    }
+
+    function zoomOut() {
+      if (zoomLevel > 0.5) {
+        zoomLevel -= 0.1;
+        zoomWrapper.style.transform = `scale(${zoomLevel})`;
+      }
+    }
+
+    function changeXSize(value) {
+      document.documentElement.style.setProperty('--x-size', value + '%');
+    }
+
+    function createDraggableX(tile) {
+      const xContainer = document.createElement('div');
+      xContainer.className = 'x-container';
+
+      const x1 = document.createElement('div');
+      x1.className = 'x-line x1';
+
+      const x2 = document.createElement('div');
+      x2.className = 'x-line x2';
+
+      xContainer.appendChild(x1);
+      xContainer.appendChild(x2);
+
+      let isDragging = false;
+      let offsetX, offsetY;
+
+      xContainer.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        offsetX = e.offsetX;
+        offsetY = e.offsetY;
+        xContainer.style.cursor = 'grabbing';
+        e.stopPropagation();
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const rect = tile.getBoundingClientRect();
+        let x = e.clientX - rect.left - offsetX;
+        let y = e.clientY - rect.top - offsetY;
+        xContainer.style.left = x + 'px';
+        xContainer.style.top = y + 'px';
+        xContainer.style.transform = 'none';
+      });
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+        xContainer.style.cursor = 'grab';
+      });
+
+      /* Double click to delete */
+      xContainer.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        tile.removeChild(xContainer);
+      });
+
+      return xContainer;
+    }
+
+    for (let i = 0; i < rows * cols; i++) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+
+      tile.addEventListener('click', () => {
+        if (!tile.querySelector('.x-container')) {
+          const x = createDraggableX(tile);
+          tile.appendChild(x);
+        }
+      });
+
+      grid.appendChild(tile);
+    }
+  </script>
+
+</body>
+</html>
